@@ -17,6 +17,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  geolocator: ^8.0.1
 
   bw_streamed_settings:
     # When depending on this package from a real application you should use:

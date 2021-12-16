@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:bw_streamed_settings/bw_streamed_settings.dart';
+import 'package:geolocator/geolocator.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,6 +25,8 @@ class _MyAppState extends State<MyApp> {
   bool? gpsEnabled2;
   bool? powerSaveModeEnabled;
   bool? bluetoothEnabled;
+
+  String? platformVersion;
 
   @override
   void initState() {
