@@ -1,6 +1,7 @@
 package eu.bindworks.bw_streamed_settings
 
 import android.app.Activity
+import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.BroadcastReceiver
@@ -10,6 +11,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.location.LocationManager
 import android.os.Build
+import android.os.Bundle
 import android.os.PowerManager
 import androidx.annotation.NonNull
 
@@ -25,7 +27,6 @@ import io.flutter.plugin.common.EventChannel
 
 
 class BwStreamedSettingsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
-
     private var _applicationContext: Context? = null
 
     private lateinit var methodChannel: MethodChannel
@@ -34,6 +35,9 @@ class BwStreamedSettingsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware
     private lateinit var powerSaveModeEventChannel: EventChannel
     private lateinit var bluetoothEventChannel: EventChannel
 
+    private var gpsStreamHandler: BoolStreamHandler? = null
+    private var powerSaveModeStreamHandler: BoolStreamHandler? = null
+    private var bluetoothStreamHandler: BoolStreamHandler? = null
 
     override fun onDetachedFromActivity() {
         teardownStreams()
@@ -49,35 +53,60 @@ class BwStreamedSettingsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         setUpStreams(binding.activity)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            binding.activity.registerActivityLifecycleCallbacks(
+                object : Application.ActivityLifecycleCallbacks {
+                    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+                    override fun onActivityStarted(activity: Activity) {}
+                    override fun onActivityPaused(activity: Activity) {}
+                    override fun onActivityStopped(activity: Activity) {}
+                    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+                    override fun onActivityDestroyed(activity: Activity) {}
+
+                    override fun onActivityResumed(activity: Activity) {
+                        // If user turn on Bluetooth, gps, etc. in device settings, and move back to the app, we want to be notified by this change
+                        gpsStreamHandler?.sendEvent(isGpsEnabled(activity))
+                        powerSaveModeStreamHandler?.sendEvent(isPowerSaveModeEnabled(activity))
+                        bluetoothStreamHandler?.sendEvent(isBluetoothEnabled(activity))
+                    }
+                })
+        }
     }
 
     private fun setUpStreams(activity: Activity) {
-        gpsEventChannel.setStreamHandler(SettingsStreamHandler(
-            activity, "android.location.MODE_CHANGED"
-        ) { context: Context, flutterSink: EventChannel.EventSink? ->
-            flutterSink?.success(isGpsEnabled(context))
-        })
+        gpsStreamHandler = BoolStreamHandler(
+            activity, "android.location.MODE_CHANGED",
+            onSystemEvent = { context: Context ->
+                gpsStreamHandler?.sendEvent(isGpsEnabled(context))
+            })
 
-        powerSaveModeEventChannel.setStreamHandler(SettingsStreamHandler(
-            activity, "android.os.action.POWER_SAVE_MODE_CHANGED"
-        ) { context: Context, flutterSink: EventChannel.EventSink? ->
-            flutterSink?.success(isPowerSaveModeEnabled(context))
-        })
+        powerSaveModeStreamHandler =
+            BoolStreamHandler(
+                activity, "android.os.action.POWER_SAVE_MODE_CHANGED",
+                onSystemEvent =
+                { context: Context ->
+                    powerSaveModeStreamHandler?.sendEvent(isPowerSaveModeEnabled(context))
+                })
 
-        bluetoothEventChannel.setStreamHandler(SettingsStreamHandler(
-            activity, BluetoothAdapter.ACTION_STATE_CHANGED
-        ) { context: Context, flutterSink: EventChannel.EventSink? ->
-            flutterSink?.success(isBluetoothEnabled(context))
-        })
+        bluetoothStreamHandler = BoolStreamHandler(
+            activity, BluetoothAdapter.ACTION_STATE_CHANGED,
+            onSystemEvent = { context: Context ->
+                bluetoothStreamHandler?.sendEvent(isBluetoothEnabled(context))
+            })
+
+        gpsEventChannel.setStreamHandler(gpsStreamHandler)
+        powerSaveModeEventChannel.setStreamHandler(powerSaveModeStreamHandler)
+        bluetoothEventChannel.setStreamHandler(bluetoothStreamHandler)
     }
 
-    private fun isPowerSaveModeEnabled(context: Context): Boolean {
+    private fun isPowerSaveModeEnabled(context: Context): Boolean? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             val powerManager =
                 context.getSystemService(POWER_SERVICE) as PowerManager
             powerManager.isPowerSaveMode
         } else {
-            throw Exception("To detect Power save mode state Android API level needs to be >= 21")
+            //To detect Power save mode state Android API level needs to be >= 21
+            return null
         }
     }
 
@@ -86,16 +115,16 @@ class BwStreamedSettingsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 
-    private fun isBluetoothEnabled(context: Context): Boolean {
+    private fun isBluetoothEnabled(context: Context): Boolean? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             val bluetoothManager =
                 context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
             bluetoothManager.adapter.isEnabled
         } else {
-            throw Exception("To detect bluetooth state Android API level needs to be >= 18")
+            // To detect bluetooth state Android API level needs to be >= 18
+            return null
         }
     }
-
 
     private fun teardownStreams() {
         gpsEventChannel.setStreamHandler(null)
@@ -148,10 +177,10 @@ class BwStreamedSettingsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware
     }
 }
 
-class SettingsStreamHandler(
+class BoolStreamHandler(
     private val activity: Activity,
     private val eventsFiler: String,
-    private val onEvent: (context: Context, flutterSink: EventChannel.EventSink?) -> Unit
+    private val onSystemEvent: (context: Context) -> Unit
 ) :
     EventChannel.StreamHandler {
 
@@ -159,7 +188,7 @@ class SettingsStreamHandler(
 
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            onEvent(context, flutterSink)
+            onSystemEvent(context)
         }
     }
 
@@ -170,5 +199,9 @@ class SettingsStreamHandler(
 
     override fun onCancel(arguments: Any?) {
         activity.unregisterReceiver(broadcastReceiver)
+    }
+
+    fun sendEvent(value: Boolean?) {
+        flutterSink?.success(value)
     }
 }
