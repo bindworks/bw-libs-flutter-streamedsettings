@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:bw_streamed_settings/bw_streamed_settings.dart';
-import 'package:geolocator/geolocator.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,19 +17,13 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   StreamSubscription<dynamic>? streamSubscriptionGps;
   StreamSubscription<dynamic>? streamSubscriptionPowerSaveMode;
-  StreamSubscription<dynamic>? streamSubscriptionBluetooth;
+  StreamSubscription<dynamic>? streamSubscriptionBluetooth1;
+  StreamSubscription<dynamic>? streamSubscriptionBluetooth2;
 
-  bool? gpsEnabled1;
-  bool? gpsEnabled2;
+  bool? gpsEnabled;
   bool? powerSaveModeEnabled;
-  bool? bluetoothEnabled;
-
-  String? platformVersion;
-
-  @override
-  void initState() {
-    super.initState();
-  }
+  bool? bluetoothEnabled1;
+  bool? bluetoothEnabled2;
 
   @override
   Widget build(BuildContext context) {
@@ -45,43 +37,24 @@ class _MyAppState extends State<MyApp> {
             children: [
               Row(
                 children: [
-                  Expanded(child: Text('Gps enabled: $gpsEnabled1')),
+                  Expanded(child: Text('Gps enabled: $gpsEnabled')),
                   TextButton(
-                    onPressed: () {
-                      streamSubscriptionGps = BwStreamedSettings.gpsEnabledStream.listen((event) {
-                        setState(() {
-                          gpsEnabled1 = event;
+                    onPressed: () async {
+                      if (streamSubscriptionGps == null) {
+                        streamSubscriptionGps = streamSubscriptionGps =
+                            BwStreamedSettings.gpsEnabledStream.listen((event) {
+                          setState(() {
+                            gpsEnabled = event;
+                          });
                         });
-                      });
-                    },
-                    child: const Text('start listen'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      streamSubscriptionGps?.cancel();
-                    },
-                    child: const Text('stop listen'),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(child: Text('Gps enabled: $gpsEnabled2')),
-                  TextButton(
-                    onPressed: () {
-                      BwStreamedSettings.gpsEnabledStream.listen((event) {
+                      } else {
+                        await streamSubscriptionGps?.cancel();
                         setState(() {
-                          gpsEnabled2 = event;
+                          streamSubscriptionGps = null;
                         });
-                      });
+                      }
                     },
-                    child: const Text('start listen'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      streamSubscriptionGps?.cancel();
-                    },
-                    child: const Text('stop listen'),
+                    child: Text((streamSubscriptionGps == null) ? 'start listen' : 'stop listen'),
                   ),
                 ],
               ),
@@ -89,43 +62,73 @@ class _MyAppState extends State<MyApp> {
                 children: [
                   Expanded(child: Text('Save mode enabled: $powerSaveModeEnabled')),
                   TextButton(
-                    onPressed: () {
-                      streamSubscriptionPowerSaveMode =
-                          BwStreamedSettings.powerSaveModeEnabledStream.listen((event) {
-                        setState(() {
-                          powerSaveModeEnabled = event;
+                    onPressed: () async {
+                      if (streamSubscriptionPowerSaveMode == null) {
+                        streamSubscriptionPowerSaveMode =
+                            BwStreamedSettings.powerSaveModeEnabledStream.listen((event) {
+                          setState(() {
+                            powerSaveModeEnabled = event;
+                          });
                         });
-                      });
+                      } else {
+                        await streamSubscriptionPowerSaveMode?.cancel();
+                        setState(() {
+                          streamSubscriptionPowerSaveMode = null;
+                        });
+                      }
                     },
-                    child: const Text('start listen'),
+                    child: Text(
+                        (streamSubscriptionPowerSaveMode == null) ? 'start listen' : 'stop listen'),
                   ),
+                ],
+              ),
+              const SizedBox(height: 30),
+              const Text('Test 2 simultaneus Bluetooth on/off streams'),
+              Row(
+                children: [
+                  Expanded(child: Text('#1 Bluetooth enabled: $bluetoothEnabled1')),
                   TextButton(
-                    onPressed: () {
-                      streamSubscriptionPowerSaveMode?.cancel();
+                    onPressed: () async {
+                      if (streamSubscriptionBluetooth1 == null) {
+                        streamSubscriptionBluetooth1 =
+                            BwStreamedSettings.bluetoothEnabledStream.listen((event) {
+                          setState(() {
+                            bluetoothEnabled1 = event;
+                          });
+                        });
+                      } else {
+                        await streamSubscriptionBluetooth1?.cancel();
+                        setState(() {
+                          streamSubscriptionBluetooth1 = null;
+                        });
+                      }
                     },
-                    child: const Text('stop listen'),
+                    child: Text(
+                        (streamSubscriptionBluetooth1 == null) ? 'start listen' : 'stop listen'),
                   ),
                 ],
               ),
               Row(
                 children: [
-                  Expanded(child: Text('Bluetooth enabled: $bluetoothEnabled')),
+                  Expanded(child: Text('#2 Bluetooth enabled: $bluetoothEnabled2')),
                   TextButton(
-                    onPressed: () {
-                      streamSubscriptionBluetooth =
-                          BwStreamedSettings.bluetoothEnabledStream.listen((event) {
-                        setState(() {
-                          bluetoothEnabled = event;
+                    onPressed: () async {
+                      if (streamSubscriptionBluetooth2 == null) {
+                        streamSubscriptionBluetooth2 =
+                            BwStreamedSettings.bluetoothEnabledStream.listen((event) {
+                          setState(() {
+                            bluetoothEnabled2 = event;
+                          });
                         });
-                      });
+                      } else {
+                        await streamSubscriptionBluetooth2?.cancel();
+                        setState(() {
+                          streamSubscriptionBluetooth2 = null;
+                        });
+                      }
                     },
-                    child: const Text('start listen'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      streamSubscriptionBluetooth?.cancel();
-                    },
-                    child: const Text('stop listen'),
+                    child: Text(
+                        (streamSubscriptionBluetooth2 == null) ? 'start listen' : 'stop listen'),
                   ),
                 ],
               ),

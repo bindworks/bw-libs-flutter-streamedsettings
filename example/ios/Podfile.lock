@@ -2,26 +2,20 @@ PODS:
   - bw_streamed_settings (0.0.1):
     - Flutter
   - Flutter (1.0.0)
-  - geolocator_apple (1.2.0):
-    - Flutter
 
 DEPENDENCIES:
   - bw_streamed_settings (from `.symlinks/plugins/bw_streamed_settings/ios`)
   - Flutter (from `Flutter`)
-  - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
 
 EXTERNAL SOURCES:
   bw_streamed_settings:
     :path: ".symlinks/plugins/bw_streamed_settings/ios"
   Flutter:
     :path: Flutter
-  geolocator_apple:
-    :path: ".symlinks/plugins/geolocator_apple/ios"
 
 SPEC CHECKSUMS:
   bw_streamed_settings: c62adde821b57a4612e84653b5cc7838525316bd
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
-  geolocator_apple: b741765c55dc21950e3e106e8b3584e55cf81ce5
 
 PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
 

@@ -26,9 +26,6 @@ import io.flutter.plugin.common.EventChannel
 
 class BwStreamedSettingsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
-    private var streamedChannelName = "bw_streamed_settings"
-    private var singleReadingChannelName = "bw_single_reading_settings"
-
     private var _applicationContext: Context? = null
 
     private lateinit var methodChannel: MethodChannel
@@ -107,13 +104,13 @@ class BwStreamedSettingsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware
     }
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        methodChannel = MethodChannel(flutterPluginBinding.binaryMessenger, singleReadingChannelName)
+        methodChannel = MethodChannel(flutterPluginBinding.binaryMessenger, "bw_single_reading_settings")
         methodChannel.setMethodCallHandler(this)
 
-        gpsEventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "${streamedChannelName}/gps")
+        gpsEventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "bw_streamed_settings/gps")
         powerSaveModeEventChannel =
-            EventChannel(flutterPluginBinding.binaryMessenger, "${streamedChannelName}/power_save_mode")
-        bluetoothEventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "${streamedChannelName}/bluetooth")
+            EventChannel(flutterPluginBinding.binaryMessenger, "bw_streamed_settings/power_save_mode")
+        bluetoothEventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "bw_streamed_settings/bluetooth")
 
         _applicationContext = flutterPluginBinding.applicationContext
     }
