@@ -1,11 +1,12 @@
 name: bw_streamed_settings
 description: Package that provides device settings state as stream
 version: 1.0.0
-homepage:
+homepage: 'https://bindworks.eu'
+repository: https://gitlab.com/bindworks/libs/bw-streamed-settings
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
-  flutter: ">=1.20.0"
+  sdk: '>=2.12.0 <3.0.0'
+  flutter: '>=1.20.0'
 
 dependencies:
   flutter:
