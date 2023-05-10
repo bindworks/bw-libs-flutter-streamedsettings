@@ -119,7 +119,7 @@ class BwStreamedSettingsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             val bluetoothManager =
                 context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
-            bluetoothManager.adapter.isEnabled
+            bluetoothManager.adapter?.isEnabled
         } else {
             // To detect bluetooth state Android API level needs to be >= 18
             return null
