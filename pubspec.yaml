@@ -1,6 +1,6 @@
 name: bw_streamed_settings
 description: Package that provides device settings state as stream
-version: 1.0.0
+version: 1.0.1
 homepage: 'https://bindworks.eu'
 repository: https://gitlab.com/bindworks/libs/bw-streamed-settings
 
